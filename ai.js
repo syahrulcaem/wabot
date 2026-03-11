@@ -69,6 +69,8 @@ struktur organisasi, kontak internal, dan status kehadiran.
 - User bertanya tentang divisi / tim       → panggil getKaryawanByDivisi
 - User bertanya lokasi / kehadiran         → panggil getKehadiranHariIni
 - User ingin melihat semua karyawan        → panggil getAllKaryawan
+- User bertanya tentang project / portofolio → panggil getProjects
+- User bertanya tentang sejarah / riwayat → panggil getHistory
 - Pertanyaan di luar direktori kantor      → tolak dengan sopan
 
 ## Interpretasi Data Kehadiran
@@ -138,6 +140,24 @@ const tools = [
           properties: {},
         },
       },
+      {
+        name: 'getProjects',
+        description:
+          'Dapatkan daftar semua project yang pernah dikerjakan. Gunakan bila user bertanya tentang project, portofolio, atau karya.',
+        parameters: {
+          type: 'OBJECT',
+          properties: {},
+        },
+      },
+      {
+        name: 'getHistory',
+        description:
+          'Dapatkan riwayat / sejarah perjalanan pengembangan. Gunakan bila user bertanya tentang sejarah, riwayat, atau timeline.',
+        parameters: {
+          type: 'OBJECT',
+          properties: {},
+        },
+      },
     ],
   },
 ];
@@ -153,6 +173,10 @@ async function callFunction(name, args) {
       return db.getKehadiranHariIni(args.nama);
     case 'getAllKaryawan':
       return db.getAllKaryawan();
+    case 'getProjects':
+      return db.getAllProjects();
+    case 'getHistory':
+      return db.getAllHistory();
     default:
       return { error: `Fungsi '${name}' tidak dikenal.` };
   }

@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel — Asisten Kantor</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #1a73e8;
+      --primary-dark: #1558c0;
+      --danger: #e53935;
+      --success: #2e7d32;
+      --surface: #fff;
+      --bg: #f0f2f5;
+      --border: #e0e0e0;
+      --text: #222;
+      --muted: #666;
+      --sidebar-w: 220px;
+    }
+    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+
+    /* ── Login ── */
+    #login-screen {
+      display: flex; align-items: center; justify-content: center;
+      height: 100vh;
+    }
+    .login-box {
+      background: var(--surface); border-radius: 12px;
+      padding: 40px; width: 360px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.12);
+    }
+    .login-box h1 { font-size: 1.4rem; margin-bottom: 6px; color: var(--primary); }
+    .login-box p  { font-size: .85rem; color: var(--muted); margin-bottom: 24px; }
+
+    /* ── App Shell ── */
+    #app { display: none; height: 100vh; }
+    .shell { display: flex; height: 100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-w); background: #1e293b; color: #e2e8f0;
+      display: flex; flex-direction: column; flex-shrink: 0;
+    }
+    .sidebar-brand {
+      padding: 20px 18px; font-size: 1rem; font-weight: 700;
+      border-bottom: 1px solid rgba(255,255,255,.1); background: #0f172a;
+    }
+    .sidebar-brand span { font-size: .75rem; display: block; font-weight: 400; opacity: .7; margin-top: 2px; }
+    .nav { flex: 1; padding: 12px 0; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 18px; cursor: pointer; font-size: .88rem;
+      transition: background .15s; border-left: 3px solid transparent;
+    }
+    .nav-item:hover { background: rgba(255,255,255,.07); }
+    .nav-item.active { background: rgba(26,115,232,.25); border-left-color: var(--primary); color: #fff; }
+    .nav-item .ico { font-size: 16px; }
+    .sidebar-footer { padding: 14px 18px; border-top: 1px solid rgba(255,255,255,.1); }
+    .btn-logout {
+      width: 100%; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+      color: #e2e8f0; padding: 8px; border-radius: 6px; cursor: pointer; font-size: .83rem;
+    }
+    .btn-logout:hover { background: rgba(229,57,53,.3); }
+
+    /* Main */
+    .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+    .topbar {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 14px 28px; display: flex; align-items: center; gap: 12px;
+      flex-shrink: 0;
+    }
+    .topbar h2 { font-size: 1.05rem; }
+    .topbar .badge {
+      background: var(--primary); color: #fff; font-size: .7rem;
+      padding: 2px 8px; border-radius: 20px;
+    }
+    .topbar a { margin-left: auto; font-size: .82rem; color: var(--primary); text-decoration: none; }
+    .content { padding: 28px; flex: 1; }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .stat-card {
+      background: var(--surface); border-radius: 10px; padding: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08); text-align: center;
+    }
+    .stat-card .num { font-size: 2rem; font-weight: 700; color: var(--primary); }
+    .stat-card .lbl { font-size: .78rem; color: var(--muted); margin-top: 4px; }
+
+    /* Card */
+    .card {
+      background: var(--surface); border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08); overflow: hidden;
+    }
+    .card-header {
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card-header h3 { font-size: .95rem; }
+    .card-body { padding: 20px; }
+
+    /* Table */
+    .tbl-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    thead th {
+      background: #f8fafc; color: var(--muted); font-weight: 600;
+      padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border);
+    }
+    tbody tr { border-bottom: 1px solid #f1f5f9; transition: background .1s; }
+    tbody tr:hover { background: #f8fafc; }
+    tbody td { padding: 10px 14px; vertical-align: middle; }
+    .td-img img { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; }
+    .td-img .no-img { width: 48px; height: 48px; background: #f0f2f5; border-radius: 6px; display:flex;align-items:center;justify-content:center;font-size:20px; }
+    .badge-tech {
+      display: inline-block; background: #e8f0fe; color: var(--primary);
+      font-size: .7rem; padding: 2px 7px; border-radius: 10px; margin: 1px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 7px 14px; border-radius: 6px; border: none;
+      font-size: .82rem; cursor: pointer; font-family: inherit; transition: .15s;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-danger  { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
+    .btn-danger:hover  { background: var(--danger); color: #fff; }
+    .btn-edit    { background: #f0fdf4; color: var(--success); border: 1px solid #bbf7d0; }
+    .btn-edit:hover    { background: var(--success); color: #fff; }
+    .btn-sm { padding: 5px 10px; font-size: .78rem; }
+
+    /* Form */
+    .form-grid { display: grid; gap: 14px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    label { font-size: .82rem; font-weight: 600; color: #444; }
+    input[type=text], input[type=url], input[type=date], input[type=password],
+    textarea, select {
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 8px 10px; font-size: .85rem; outline: none; font-family: inherit;
+      transition: border-color .2s; width: 100%;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--primary); }
+    textarea { resize: vertical; min-height: 80px; }
+    .img-preview { margin-top: 6px; }
+    .img-preview img { max-width: 120px; max-height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
+    .form-actions { display: flex; gap: 10px; margin-top: 6px; }
+    .error-msg { color: var(--danger); font-size: .8rem; margin-top: 4px; }
+
+    /* Modal */
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.45); z-index: 100;
+      align-items: center; justify-content: center;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--surface); border-radius: 12px; width: 560px;
+      max-width: 95vw; max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0,0,0,.2);
+    }
+    .modal-header {
+      padding: 18px 22px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-header h3 { font-size: 1rem; }
+    .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--muted); }
+    .modal-body { padding: 22px; }
+    .modal-footer { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+
+    /* Sections */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* Alert */
+    .alert { padding: 10px 14px; border-radius: 6px; font-size: .83rem; margin-bottom: 14px; }
+    .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .alert-error   { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+  </style>
+</head>
+<body>
+
+<!-- ══ Login Screen ════════════════════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>🔐 Admin Panel</h1>
+    <p>Asisten Kantor — Manajemen Data</p>
+    <div id="login-alert"></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Username</label>
+        <input id="login-user" type="text" value="admin" autocomplete="username"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input id="login-pass" type="password" autocomplete="current-password" placeholder="Password dari .env ADMIN_PASSWORD"/>
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()" style="width:100%; justify-content:center; padding:10px;">
+        Masuk
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ App Shell ══════════════════════════════════════════════════════════════ -->
+<div id="app">
+  <div class="shell">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sidebar-brand">
+        🏢 Admin Panel
+        <span>Asisten Kantor</span>
+      </div>
+      <div class="nav">
+        <div class="nav-item active" onclick="showSection('dashboard')">
+          <span class="ico">📊</span> Dashboard
+        </div>
+        <div class="nav-item" onclick="showSection('projects')">
+          <span class="ico">📁</span> Projects
+        </div>
+        <div class="nav-item" onclick="showSection('history')">
+          <span class="ico">📜</span> History
+        </div>
+        <div class="nav-item" onclick="window.open('/', '_blank')">
+          <span class="ico">💬</span> Buka Chat
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <button class="btn-logout" onclick="doLogout()">🚪 Logout</button>
+      </div>
+    </nav>
+
+    <!-- Main -->
+    <div class="main">
+      <div class="topbar">
+        <h2 id="section-title">Dashboard</h2>
+        <span class="badge" id="section-badge"></span>
+        <a href="/" target="_blank">↗ Buka Website</a>
+      </div>
+      <div class="content">
+        <div id="global-alert"></div>
+
+        <!-- ── Dashboard ── -->
+        <div id="section-dashboard" class="section active">
+          <div class="stats-grid" id="stats-grid">
+            <div class="stat-card"><div class="num" id="stat-karyawan">—</div><div class="lbl">👥 Total Karyawan</div></div>
+            <div class="stat-card"><div class="num" id="stat-projects">—</div><div class="lbl">📁 Total Projects</div></div>
+            <div class="stat-card"><div class="num" id="stat-history">—</div><div class="lbl">📜 Total History</div></div>
+            <div class="stat-card"><div class="num" id="stat-hadir">—</div><div class="lbl">🏢 Hadir Hari Ini</div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>🚀 Panduan Cepat</h3></div>
+            <div class="card-body" style="font-size:.88rem;line-height:2;">
+              <b>Projects</b> — Kelola daftar project yang tampil di website dan bisa ditanya ke bot.<br>
+              <b>History</b> — Kelola riwayat / sejarah perjalanan yang dapat ditanya ke bot.<br>
+              <b>Bot Integration</b> — Setelah menambah data, bot otomatis membaca data terbaru dari database.<br>
+              <b>Upload Gambar</b> — Format PNG, JPG, WebP, maks 5 MB. Tersimpan di <code>/public/uploads/</code>.
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Projects ── -->
+        <div id="section-projects" class="section">
+          <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+            <button class="btn btn-primary" onclick="openProjectModal()">➕ Tambah Project</button>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>📁 Daftar Projects</h3></div>
+            <div class="card-body tbl-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Gambar</th>
+                    <th>Nama Project</th>
+                    <th>Teknologi</th>
+                    <th>Tanggal</th>
+                    <th>Link</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="projects-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── History ── -->
+        <div id="section-history" class="section">
+          <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+            <button class="btn btn-primary" onclick="openHistoryModal()">➕ Tambah History</button>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>📜 Riwayat / Sejarah</h3></div>
+            <div class="card-body tbl-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Gambar</th>
+                    <th>Judul</th>
+                    <th>Deskripsi</th>
+                    <th>Tanggal</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="history-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /content -->
+    </div><!-- /main -->
+  </div>
+</div>
+
+<!-- ══ Modal Project ══════════════════════════════════════════════════════════ -->
+<div class="modal-backdrop" id="modal-project">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-project-title">Tambah Project</h3>
+      <button class="modal-close" onclick="closeModal('modal-project')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="project-id"/>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nama Project *</label>
+          <input type="text" id="project-nama" placeholder="Nama project"/>
+        </div>
+        <div class="form-group">
+          <label>Deskripsi</label>
+          <textarea id="project-deskripsi" placeholder="Deskripsi singkat project"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Teknologi yang Digunakan</label>
+            <input type="text" id="project-teknologi" placeholder="React, Node.js, PostgreSQL"/>
+          </div>
+          <div class="form-group">
+            <label>Tanggal Project</label>
+            <input type="date" id="project-tanggal"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Link Project</label>
+          <input type="url" id="project-link" placeholder="https://github.com/..."/>
+        </div>
+        <div class="form-group">
+          <label>Gambar Project</label>
+          <input type="file" id="project-gambar" accept="image/*" onchange="previewImg(this, 'project-img-preview')"/>
+          <div class="img-preview" id="project-img-preview"></div>
+        </div>
+        <div class="error-msg" id="project-error"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-project')" style="border:1px solid var(--border)">Batal</button>
+      <button class="btn btn-primary" onclick="saveProject()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Modal History ══════════════════════════════════════════════════════════ -->
+<div class="modal-backdrop" id="modal-history">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-history-title">Tambah History</h3>
+      <button class="modal-close" onclick="closeModal('modal-history')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="history-id"/>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Judul *</label>
+          <input type="text" id="history-judul" placeholder="Judul riwayat"/>
+        </div>
+        <div class="form-group">
+          <label>Deskripsi</label>
+          <textarea id="history-deskripsi" placeholder="Uraikan riwayat ini..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Tanggal</label>
+          <input type="date" id="history-tanggal"/>
+        </div>
+        <div class="form-group">
+          <label>Gambar (Opsional)</label>
+          <input type="file" id="history-gambar" accept="image/*" onchange="previewImg(this, 'history-img-preview')"/>
+          <div class="img-preview" id="history-img-preview"></div>
+        </div>
+        <div class="error-msg" id="history-error"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-history')" style="border:1px solid var(--border)">Batal</button>
+      <button class="btn btn-primary" onclick="saveHistory()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let TOKEN = localStorage.getItem('admin_token') || '';
+let projectsData = [];
+let historyData  = [];
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+(async function init() {
+  if (TOKEN) {
+    const ok = await checkToken();
+    if (ok) { showApp(); return; }
+  }
+  showLogin();
+})();
+
+async function checkToken() {
+  try {
+    const r = await api('GET', '/api/admin/stats');
+    return r.ok;
+  } catch { return false; }
+}
+
+function showLogin() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  loadDashboard();
+}
+
+// ─── Auth ────────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const username = document.getElementById('login-user').value;
+  const password = document.getElementById('login-pass').value;
+  const alertEl  = document.getElementById('login-alert');
+  alertEl.innerHTML = '';
+  try {
+    const r = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await r.json();
+    if (r.ok) {
+      TOKEN = data.token;
+      localStorage.setItem('admin_token', TOKEN);
+      showApp();
+    } else {
+      alertEl.innerHTML = `<div class="alert alert-error">${esc(data.error)}</div>`;
+    }
+  } catch {
+    alertEl.innerHTML = `<div class="alert alert-error">Tidak dapat terhubung ke server.</div>`;
+  }
+}
+
+async function doLogout() {
+  try { await api('POST', '/api/admin/logout'); } catch {}
+  TOKEN = '';
+  localStorage.removeItem('admin_token');
+  showLogin();
+}
+
+// ─── Section Navigation ───────────────────────────────────────────────────────
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+
+  const titles = { dashboard: 'Dashboard', projects: 'Projects', history: 'History' };
+  document.getElementById('section-title').textContent = titles[name] || name;
+
+  const navItems = document.querySelectorAll('.nav-item');
+  const idx = { dashboard: 0, projects: 1, history: 2 };
+  if (idx[name] !== undefined) navItems[idx[name]].classList.add('active');
+
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'projects')  loadProjects();
+  if (name === 'history')   loadHistory();
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const r = await api('GET', '/api/admin/stats');
+    const d = await r.json();
+    document.getElementById('stat-karyawan').textContent = d.total_karyawan ?? '—';
+    document.getElementById('stat-projects').textContent = d.total_projects ?? '—';
+    document.getElementById('stat-history').textContent  = d.total_history  ?? '—';
+    document.getElementById('stat-hadir').textContent    = d.hadir_hari_ini ?? '—';
+  } catch {}
+}
+
+// ─── Projects ─────────────────────────────────────────────────────────────────
+async function loadProjects() {
+  const r = await api('GET', '/api/admin/projects');
+  projectsData = await r.json();
+  renderProjects();
+}
+
+function renderProjects() {
+  const tbody = document.getElementById('projects-tbody');
+  if (!projectsData.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">Belum ada project.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = projectsData.map(p => `
+    <tr>
+      <td class="td-img">
+        ${p.gambar_project
+          ? `<img src="${esc(p.gambar_project)}" alt="gambar" loading="lazy"/>`
+          : `<div class="no-img">📁</div>`}
+      </td>
+      <td><b>${esc(p.nama_project)}</b><br><small style="color:var(--muted)">${esc(p.deskripsi || '')}</small></td>
+      <td>${formatTech(p.teknologi_yang_digunakan)}</td>
+      <td>${p.tanggal_project ? new Date(p.tanggal_project).toLocaleDateString('id-ID') : '—'}</td>
+      <td>${p.link_project ? `<a href="${esc(p.link_project)}" target="_blank" rel="noopener noreferrer">🔗 Link</a>` : '—'}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn btn-edit btn-sm" onclick='editProject(${p.id})'>✏️ Edit</button>
+        <button class="btn btn-danger btn-sm" onclick='deleteProject(${p.id})'>🗑️ Hapus</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openProjectModal(id) {
+  document.getElementById('project-id').value = '';
+  document.getElementById('project-nama').value = '';
+  document.getElementById('project-deskripsi').value = '';
+  document.getElementById('project-teknologi').value = '';
+  document.getElementById('project-tanggal').value = '';
+  document.getElementById('project-link').value = '';
+  document.getElementById('project-gambar').value = '';
+  document.getElementById('project-img-preview').innerHTML = '';
+  document.getElementById('project-error').textContent = '';
+  document.getElementById('modal-project-title').textContent = 'Tambah Project';
+  openModal('modal-project');
+}
+
+function editProject(id) {
+  const p = projectsData.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('project-id').value = p.id;
+  document.getElementById('project-nama').value = p.nama_project || '';
+  document.getElementById('project-deskripsi').value = p.deskripsi || '';
+  document.getElementById('project-teknologi').value = p.teknologi_yang_digunakan || '';
+  document.getElementById('project-tanggal').value = p.tanggal_project ? p.tanggal_project.split('T')[0] : '';
+  document.getElementById('project-link').value = p.link_project || '';
+  document.getElementById('project-gambar').value = '';
+  document.getElementById('project-img-preview').innerHTML = p.gambar_project
+    ? `<img src="${esc(p.gambar_project)}" alt="current"/>`
+    : '';
+  document.getElementById('project-error').textContent = '';
+  document.getElementById('modal-project-title').textContent = 'Edit Project';
+  openModal('modal-project');
+}
+
+async function saveProject() {
+  const id    = document.getElementById('project-id').value;
+  const nama  = document.getElementById('project-nama').value.trim();
+  const errEl = document.getElementById('project-error');
+  if (!nama) { errEl.textContent = 'Nama project wajib diisi.'; return; }
+  errEl.textContent = '';
+
+  const fd = new FormData();
+  fd.append('nama_project', nama);
+  fd.append('deskripsi', document.getElementById('project-deskripsi').value);
+  fd.append('teknologi_yang_digunakan', document.getElementById('project-teknologi').value);
+  fd.append('link_project', document.getElementById('project-link').value);
+  fd.append('tanggal_project', document.getElementById('project-tanggal').value);
+  const file = document.getElementById('project-gambar').files[0];
+  if (file) fd.append('gambar_project', file);
+
+  try {
+    const r = await apiFD(id ? 'PUT' : 'POST', id ? `/api/admin/projects/${id}` : '/api/admin/projects', fd);
+    const data = await r.json();
+    if (!r.ok) { errEl.textContent = data.error || 'Gagal menyimpan.'; return; }
+    closeModal('modal-project');
+    showGlobalAlert('success', `✅ Project berhasil ${id ? 'diupdate' : 'ditambahkan'}.`);
+    await loadProjects();
+  } catch { errEl.textContent = 'Terjadi kesalahan jaringan.'; }
+}
+
+async function deleteProject(id) {
+  if (!confirm('Yakin hapus project ini?')) return;
+  const r = await api('DELETE', `/api/admin/projects/${id}`);
+  if (r.ok) {
+    showGlobalAlert('success', '✅ Project berhasil dihapus.');
+    await loadProjects();
+  } else {
+    const d = await r.json();
+    showGlobalAlert('error', d.error || 'Gagal menghapus.');
+  }
+}
+
+// ─── History ──────────────────────────────────────────────────────────────────
+async function loadHistory() {
+  const r = await api('GET', '/api/admin/history');
+  historyData = await r.json();
+  renderHistory();
+}
+
+function renderHistory() {
+  const tbody = document.getElementById('history-tbody');
+  if (!historyData.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">Belum ada riwayat.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = historyData.map(h => `
+    <tr>
+      <td class="td-img">
+        ${h.gambar
+          ? `<img src="${esc(h.gambar)}" alt="gambar" loading="lazy"/>`
+          : `<div class="no-img">📜</div>`}
+      </td>
+      <td><b>${esc(h.judul)}</b></td>
+      <td style="max-width:260px;word-break:break-word">${esc(h.deskripsi || '')}</td>
+      <td>${h.tanggal ? new Date(h.tanggal).toLocaleDateString('id-ID') : '—'}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn btn-edit btn-sm" onclick='editHistory(${h.id})'>✏️ Edit</button>
+        <button class="btn btn-danger btn-sm" onclick='deleteHistory(${h.id})'>🗑️ Hapus</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openHistoryModal() {
+  document.getElementById('history-id').value = '';
+  document.getElementById('history-judul').value = '';
+  document.getElementById('history-deskripsi').value = '';
+  document.getElementById('history-tanggal').value = '';
+  document.getElementById('history-gambar').value = '';
+  document.getElementById('history-img-preview').innerHTML = '';
+  document.getElementById('history-error').textContent = '';
+  document.getElementById('modal-history-title').textContent = 'Tambah History';
+  openModal('modal-history');
+}
+
+function editHistory(id) {
+  const h = historyData.find(x => x.id === id);
+  if (!h) return;
+  document.getElementById('history-id').value = h.id;
+  document.getElementById('history-judul').value = h.judul || '';
+  document.getElementById('history-deskripsi').value = h.deskripsi || '';
+  document.getElementById('history-tanggal').value = h.tanggal ? h.tanggal.split('T')[0] : '';
+  document.getElementById('history-gambar').value = '';
+  document.getElementById('history-img-preview').innerHTML = h.gambar
+    ? `<img src="${esc(h.gambar)}" alt="current"/>`
+    : '';
+  document.getElementById('history-error').textContent = '';
+  document.getElementById('modal-history-title').textContent = 'Edit History';
+  openModal('modal-history');
+}
+
+async function saveHistory() {
+  const id    = document.getElementById('history-id').value;
+  const judul = document.getElementById('history-judul').value.trim();
+  const errEl = document.getElementById('history-error');
+  if (!judul) { errEl.textContent = 'Judul wajib diisi.'; return; }
+  errEl.textContent = '';
+
+  const fd = new FormData();
+  fd.append('judul', judul);
+  fd.append('deskripsi', document.getElementById('history-deskripsi').value);
+  fd.append('tanggal', document.getElementById('history-tanggal').value);
+  const file = document.getElementById('history-gambar').files[0];
+  if (file) fd.append('gambar', file);
+
+  try {
+    const r = await apiFD(id ? 'PUT' : 'POST', id ? `/api/admin/history/${id}` : '/api/admin/history', fd);
+    const data = await r.json();
+    if (!r.ok) { errEl.textContent = data.error || 'Gagal menyimpan.'; return; }
+    closeModal('modal-history');
+    showGlobalAlert('success', `✅ History berhasil ${id ? 'diupdate' : 'ditambahkan'}.`);
+    await loadHistory();
+  } catch { errEl.textContent = 'Terjadi kesalahan jaringan.'; }
+}
+
+async function deleteHistory(id) {
+  if (!confirm('Yakin hapus history ini?')) return;
+  const r = await api('DELETE', `/api/admin/history/${id}`);
+  if (r.ok) {
+    showGlobalAlert('success', '✅ History berhasil dihapus.');
+    await loadHistory();
+  } else {
+    const d = await r.json();
+    showGlobalAlert('error', d.error || 'Gagal menghapus.');
+  }
+}
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+function api(method, url) {
+  return fetch(url, { method, headers: { Authorization: `Bearer ${TOKEN}` } });
+}
+
+function apiFD(method, url, fd) {
+  return fetch(url, { method, headers: { Authorization: `Bearer ${TOKEN}` }, body: fd });
+}
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function previewImg(input, previewId) {
+  const file = input.files[0];
+  const el   = document.getElementById(previewId);
+  if (!file) { el.innerHTML = ''; return; }
+  const url = URL.createObjectURL(file);
+  el.innerHTML = `<img src="${url}" alt="preview"/>`;
+}
+
+function esc(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatTech(str) {
+  if (!str) return '—';
+  return str.split(/[,;]+/).map(t => t.trim()).filter(Boolean)
+    .map(t => `<span class="badge-tech">${esc(t)}</span>`).join(' ');
+}
+
+function showGlobalAlert(type, msg) {
+  const el = document.getElementById('global-alert');
+  el.innerHTML = `<div class="alert alert-${type}">${esc(msg)}</div>`;
+  setTimeout(() => { el.innerHTML = ''; }, 4000);
+}
+
+// Close modal on backdrop click
+document.querySelectorAll('.modal-backdrop').forEach(bd => {
+  bd.addEventListener('click', e => { if (e.target === bd) bd.classList.remove('open'); });
+});
+
+// Enter to login
+document.getElementById('login-pass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+</script>
+</body>
+</html>

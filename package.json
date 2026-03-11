@@ -1,0 +1,25 @@
+{
+  "name": "wabot-office-assistant",
+  "version": "1.0.0",
+  "description": "AI Office Assistant WhatsApp Bot (Baileys + Gemini + PostgreSQL)",
+  "type": "module",
+  "main": "bot.js",
+  "scripts": {
+    "start":          "node bot.js",
+    "test:cli":       "node test-cli.js",
+    "seed":           "node seed.js",
+    "seed:fresh":     "node seed.js --fresh",
+    "migrate":        "node migrate.js up",
+    "migrate:down":   "node migrate.js down",
+    "migrate:status": "node migrate.js status"
+  },
+  "dependencies": {
+    "@google/generative-ai":   "^0.24.0",
+    "@hapi/boom":              "^10.0.1",
+    "@whiskeysockets/baileys": "^6.7.18",
+    "dotenv":                  "^16.4.0",
+    "pg":                      "^8.13.0",
+    "pino":                    "^9.6.0",
+    "qrcode-terminal":         "^0.12.0"
+  }
+}
